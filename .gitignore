@@ -15,3 +15,5 @@ dist
 
 client/public/uploads/
 server/firebase-service-account.json
+
+*/__pycache__/*
