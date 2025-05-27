@@ -58,6 +58,7 @@ const Header = ({ isTopBar, variant }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
+    localStorage.removeItem("userRole");
     setUsername(null);
     navigate("/");
   };

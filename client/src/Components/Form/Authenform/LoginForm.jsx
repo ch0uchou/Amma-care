@@ -64,9 +64,13 @@ const LoginForm = ({ onLogin }) => {
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || "Login failed");
 
-            // Check if user is not verified
+            if (!data.user.active) {
+                setError("Your account has been deactivated");
+                return;
+            }
+
             if (!data.user.verified) {
-                localStorage.setItem("unverifiedEmail", email); // Store email for verification
+                localStorage.setItem("unverifiedEmail", email);
                 localStorage.setItem("verifySource", "login");
                 navigate("/verify");
                 try {
@@ -76,9 +80,10 @@ const LoginForm = ({ onLogin }) => {
                         body: JSON.stringify({ email }),
                     });
 
-                    const otpData = await otpResponse.json();
-                    if (!otpResponse.ok) throw new Error(otpData.message || "Failed to send OTP");
-
+                    if (!otpResponse.ok) {
+                        const otpData = await otpResponse.json();
+                        throw new Error(otpData.message || "Failed to send OTP");
+                    }
                     return;
                 } catch (otpError) {
                     setError(otpError.message);
@@ -86,26 +91,30 @@ const LoginForm = ({ onLogin }) => {
                 }
             }
 
+            // Store user data in localStorage
             localStorage.setItem("token", data.token);
             localStorage.setItem("username", data.user.username);
+            localStorage.setItem("userRole", data.user.role);
+
+            // Notify parent component
             onLogin(data.user);
 
-            if (data.user.role === "admin") {
-                navigate("/admin");
-            } else if (data.user.role === "nurse") {
-                navigate("/nurse/dashboard");
-            } else if (data.user.role === "doctor") {
-                navigate("/doctor");
-            } else if (data.user.role === "pharmacy") {
-                navigate("/pharmacy");
-            } else if (data.user.role === "head of department") {
-                navigate("/hod");
-            } else {
-                navigate("/");
-            }
+            // Role-based navigation
+            const roleRoutes = {
+                admin: "/admin",
+                nurse: "/nurse/dashboard",
+                doctor: "/doctor",
+                pharmacy: "/pharmacy",
+                "head of department": "/hod",
+                user: "/"
+            };
+
+            const route = roleRoutes[data.user.role] || "/";
+            navigate(route);
+
         } catch (err) {
             setError(err.message);
-            console.log(err);
+            console.error("Login error:", err);
         }
     };
 

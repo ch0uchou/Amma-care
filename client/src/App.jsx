@@ -1,4 +1,6 @@
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
+import PrivateRoute from "./Components/PrivateRoute/PrivateRoute";
 import Layout from "./Components/Layout/Layout";
 import LayoutWithoutHeader from "./Components/Layout/LayoutWithoutHeader";
 import AdminLayout from "./Components/Layout/AdminLayout";
@@ -84,6 +86,23 @@ import BlogsSection1 from "./Components/BlogsSection/BlogsSection1";
 import DoctorBlogsPage from "./Pages/BlogsPage/DoctorBlogsPage";
 import DoctorBlogsDetails from "./Pages/BlogsPage/DoctorBlogsDetails";
 
+// Add axios interceptor
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Clear all auth data and redirect to login
+            localStorage.removeItem("token");
+            localStorage.removeItem("username");
+            localStorage.removeItem("userRole");
+            localStorage.removeItem("unverifiedEmail");
+            localStorage.removeItem("verifySource");
+            window.location.href = "/login";
+        }
+        return Promise.reject(error);
+    }
+);
+
 function App() {
     Aos.init({
         duration: 1500,
@@ -101,14 +120,19 @@ function App() {
     return (
         <>
             <Routes>
-                <Route path="/meeting/:roomId" element={<Meeting />} />
+                <Route path="/meeting/:roomId" element={
+                    <Meeting />
+                } />
+
                 <Route path="/" element={<Layout isTopBar={true} />}>
                     <Route index element={<MainHome />} />
                     <Route path="/home-v2" element={<HomeV2 />} />
                 </Route>
+
                 <Route path="/" element={<Layout variant="cs_type_1" />}>
                     <Route path="/home-v3" element={<HomeV3 />} />
                 </Route>
+
                 <Route path="/" element={<Layout />}>
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/service" element={<ServicePage />} />
@@ -119,30 +143,16 @@ function App() {
                     <Route path="/BookingAppointments" element={<BookingAppointments />} />
                     <Route path="/appointmentshistory" element={<AppointmentsHistory />} />
                     <Route path="/ViewAppointmentDetail/:appointmentId" element={<ViewAppointmentDetail />} />
-                    <Route path="/updatediagnosis/:diagnosisId" element={<UpdateDiagnosisPage />} />
-                    <Route path="/updateprescription/:prescriptionId" element={<UpdatePrescriptionPage />} />
-                    <Route path="/doctorappointments" element={<DoctorAppointments />} />
-                    <Route path="/appointment/:id" element={<AppointmentDetail />} />
                     <Route path="/doctors" element={<DoctorsPage />} />
                     <Route path="/doctors/:doctorId" element={<DoctorsDetailsPage />} />
-                    <Route path="/diagnosisform" element={<DiagnosisForm />} />
-                    <Route path="/diagnosismanagement" element={<DiagnosisManagement />} />
-                    <Route path="/diagnosisdetails/:id" element={<DiagnosisDetailPage />} />
-                    <Route path="/prescriptionform" element={<PrescriptionForm />} />
-                    <Route path="/prescriptionmanagement" element={<PrescriptionManagement />} />
-                    <Route path="/prescriptiondetails/:id" element={<PrescriptionDetailPage />} />
-                    <Route path="/timetable" element={<TimeTablePage />} />
-                    <Route path="/portfolio" element={<PortfolioPage />} />
-                    <Route path="/error" element={<ErrorPage />} />
-                    <Route path="/contact" element={<ContactPage />} />
-                    <Route path="*" element={<ErrorPage />} />
-                    <Route path="/search" element={<DoctorsResultPage />} />
                     <Route path="/favorites" element={<FavoritesPage />} />
                     <Route path="/profile" element={<UserProfile />} />
                     <Route path="/payment" element={<Payment />} />
                     <Route path="/payment-detail/:billId" element={<PaymentDetail />} />
-
+                    <Route path="/contact" element={<ContactPage />} />
+                    <Route path="*" element={<ErrorPage />} />
                 </Route>
+
                 <Route path="/" element={<LayoutWithoutHeader />}>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
@@ -150,7 +160,11 @@ function App() {
                     <Route path="/forgotpass" element={<ForgotPass />} />
                     <Route path="/resetpass" element={<ResetPass />} />
                 </Route>
-                <Route path="/admin" element={<AdminLayout />}>
+
+                <Route path="/admin" element={
+                    <PrivateRoute allowedRoles={["admin"]}><AdminLayout />
+                    </PrivateRoute>
+                }>
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/users" element={<UserManagement />} />
                     <Route path="/admin/doctors" element={<DoctorManagement />} />
@@ -160,7 +174,11 @@ function App() {
                     <Route path="/admin/services" element={<ServiceManagement />} />
                     <Route path="profile" element={<StaffProfile />} />
                 </Route>
-                <Route path="/doctor" element={<DoctorLayout />}>
+
+                <Route path="/doctor" element={
+                    <PrivateRoute allowedRoles={["doctor"]}><DoctorLayout />
+                    </PrivateRoute>
+                }>
                     <Route path="blog" element={<DoctorBlogsPage />} />
                     <Route path="blog/create" element={<BlogCreatePage />} />
                     <Route path="blog/edit/:blogId" element={<EditBlogPage />} />
@@ -176,7 +194,10 @@ function App() {
                     <Route path="/doctor/profile" element={<StaffProfile />} />
                     {/* <Route path="/doctor/appointment/assign/:appointmentId" element={<AssignDoctor />} /> */}
                 </Route>
-                <Route path="/hod" element={<HODLayout />}>
+                <Route path="/hod" element={
+                    <PrivateRoute allowedRoles={["head of department"]}><HODLayout />
+                    </PrivateRoute>
+                }>
                     <Route path="/hod/calendar" element={<ScheduleManagement />} />
                     <Route path="/hod" element={<ManageAppointments />} />
                     <Route path="/hod/medical-result" element={<MedicalResult />} />
@@ -189,7 +210,10 @@ function App() {
                     <Route path="/hod/profile" element={<StaffProfile />} />
                     <Route path="/hod/general-health/:appointmentId" element={<GeneralHealthKetchup />} />
                 </Route>
-                <Route path="/nurse" element={<NurseLayout />}>
+                <Route path="/nurse" element={
+                    <PrivateRoute allowedRoles={["nurse"]}><NurseLayout />
+                    </PrivateRoute>
+                }>
                     <Route path="/nurse/dashboard" element={<NurseDashboard />} />
                     <Route path="/nurse/pending" element={<NursePending />} />
                     <Route path="/nurse/assigned" element={<NurseAssigned />} />
@@ -197,7 +221,10 @@ function App() {
                     <Route path="/nurse/general-health/:appointmentId" element={<GeneralHealthKetchup />} />
                     <Route path="/nurse/profile" element={<StaffProfile />} />
                 </Route>
-                <Route path="/pharmacy" element={<PharmacyLayout />}>
+                <Route path="/pharmacy" element={
+                    <PrivateRoute allowedRoles={["pharmacy"]}><PharmacyLayout />
+                    </PrivateRoute>
+                }>
                     <Route path="/pharmacy/dashboard" element={<PharmacyeDashboard />} />
                     <Route path="/pharmacy/pending" element={<PharmacyPending />} />
                     <Route path="/pharmacy/bills" element={<AllBills />} />
@@ -208,7 +235,6 @@ function App() {
             </Routes>
             <ScrollUpButton />
             {shouldShowFloatingMenu && <FloatingMenu />}
-
             <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
         </>
     );

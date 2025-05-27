@@ -10,7 +10,7 @@ const TopBar = ({ isSidebarOpen }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
-    setUsername(null);
+    localStorage.removeItem("userRole");
     navigate("/login");
   };
 
