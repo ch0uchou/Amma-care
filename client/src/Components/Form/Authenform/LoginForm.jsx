@@ -64,8 +64,8 @@ const LoginForm = ({ onLogin }) => {
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || "Login failed");
 
-            if (!data.user.active) {
-                setError("Your account has been deactivated");
+            if (!data.user.active && data.user.role === "user") {
+                setError("Tài khoản của bạn đã bị vô hiệu hóa");
                 return;
             }
 
