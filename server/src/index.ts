@@ -3,6 +3,7 @@ dotenv.config()
 
 import { Request, Response, NextFunction } from 'express';
 import http from 'http'
+import https from 'https'
 import { initSocketServer } from './utils/socketIO';
 import app from './utils/app' // (server)
 import mongo from './config/mongo' // (database)
@@ -61,9 +62,27 @@ const bootstrap = async () => {
 
   initSocketServer(server)
 
-  server.listen(PORT || 8080, () => {
-    console.log(`✅ Server is listening on port: ${PORT || 8080}`)
-  })
+  https.get('https://api.ipify.org?format=json', (resp) => {
+    let data = '';
+
+    // A chunk of data has been received.
+    resp.on('data', (chunk) => {
+      data += chunk;
+    });
+
+    // The whole response has been received.
+    resp.on('end', () => {
+      const ipAddress = JSON.parse(data).ip;
+      server.listen(PORT || 8080, () => {
+        console.log(`✅ Server is listening on port: ${PORT || 8080}`)
+        console.log(`🌍 Server IP address: ${ipAddress}`);
+      })
+    });
+
+  }).on("error", (err) => {
+    console.log("Error: " + err.message);
+  });
+
 }
 
 bootstrap()

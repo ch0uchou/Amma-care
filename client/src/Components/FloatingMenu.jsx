@@ -33,7 +33,7 @@ const FloatingMenu = () => {
     if (!input.trim()) return;
 
     const authToken = localStorage.getItem('token');
-    const PAT = 'pat_7t4PE5vlYhqFxL16EjLlrn1hUPMhEesQ5TNbIGxN8cRNTExB1LJ2vBVdas3zLnsU';
+    const PAT = 'pat_rc0ryWXTiZ8jj7gBsrj4vfrxbpCtR4SYZlk0AkabD5uitohSnlkoOY5anO1vry2Y';
     const userId = 'user_211';
 
     if (!conversationId) {
