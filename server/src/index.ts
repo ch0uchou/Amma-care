@@ -4,6 +4,7 @@ dotenv.config()
 import { Request, Response, NextFunction } from 'express';
 import http from 'http'
 import https from 'https'
+import os from 'os'
 import { initSocketServer } from './utils/socketIO';
 import app from './utils/app' // (server)
 import mongo from './config/mongo' // (database)
@@ -62,6 +63,21 @@ const bootstrap = async () => {
 
   initSocketServer(server)
 
+  // Get local IP address
+  const getLocalIP = () => {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name] || []) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          return iface.address;
+        }
+      }
+    }
+    return 'localhost';
+  };
+
+  const localIP = getLocalIP();
+
   https.get('https://api.ipify.org?format=json', (resp) => {
     let data = '';
 
@@ -72,17 +88,22 @@ const bootstrap = async () => {
 
     // The whole response has been received.
     resp.on('end', () => {
-      const ipAddress = JSON.parse(data).ip;
-      server.listen(PORT || 8080, () => {
-        console.log(`✅ Server is listening on port: ${PORT || 8080}`)
-        console.log(`🌍 Server IP address: ${ipAddress}`);
+      const publicIP = JSON.parse(data).ip;
+      server.listen(Number(PORT) || 8080, '0.0.0.0', () => {
+        console.log(`✅ Server is listening on 0.0.0.0:${PORT || 8080}`)
+        console.log(`🏠 Local IP address: ${localIP}`);
+        console.log(`🌍 Public IP address: ${publicIP}`);
       })
     });
 
   }).on("error", (err) => {
-    console.log("Error: " + err.message);
+    console.log("Error fetching public IP: " + err.message);
+    server.listen(Number(PORT) || 8080, '0.0.0.0', () => {
+      console.log(`✅ Server is listening on 0.0.0.0:${PORT || 8080}`)
+      console.log(`🏠 Local IP address: ${localIP}`);
+      console.log(`🌍 Public IP address: Unable to fetch`);
+    })
   });
-
 }
 
 bootstrap()

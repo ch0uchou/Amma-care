@@ -44,7 +44,7 @@ const TopBar = ({ isSidebarOpen }) => {
       );
       console.log("Notifications from API:", response.data);
       const sortedNotifications = (response.data.data || []).sort((a, b) =>
-        new Date(a.createdAt) - new Date(b.createdAt)
+        new Date(b.createdAt) - new Date(a.createdAt)
       );
       setNotifications(sortedNotifications);
       console.log("Updated notifications state:", sortedNotifications);
