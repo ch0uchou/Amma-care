@@ -149,10 +149,6 @@ const DoctorBlogsPage = () => {
                             Thử lại
                         </button>
                     </div>
-                ) : blogs.length === 0 ? (
-                    <div className="text-center py-5">
-                        <p>Không có blog có sẵn vào lúc này.</p>
-                    </div>
                 ) : (
                     <BlogsSection2
                         data={blogsSectionData}
