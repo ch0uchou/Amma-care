@@ -111,19 +111,32 @@ const BillUpdate = () => {
 
     const handleQRCode = async () => {
         try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                toast.error("Vui lòng đăng nhập lại để thực hiện thanh toán");
+                return;
+            }
+
             const response = await fetch(`${import.meta.env.VITE_BE_URL}/payment/create-payment`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     _id: bill._id,
-                    redirectUrl: `${import.meta.env.VITE_FE_URL}/pharmacy/bills`,
+                    redirectUrl: `${import.meta.env.VITE_FE_URL}/pharmacy/bills?payment=success&billId=${bill._id}&token=${token}`,
                     requestType: "captureWallet"
                 }),
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+                    localStorage.removeItem("token");
+                    window.location.href = "/login";
+                    return;
+                }
                 throw new Error("Failed to create payment");
             }
 
@@ -131,6 +144,9 @@ const BillUpdate = () => {
             console.log("Payment API response:", result);
 
             if (result.payUrl) {
+                // Store current page state before redirect
+                localStorage.setItem("paymentReturnUrl", window.location.pathname);
+                localStorage.setItem("paymentBillId", bill._id);
                 window.location.href = result.payUrl;
             } else {
                 toast.success("Thanh toán thành công!");

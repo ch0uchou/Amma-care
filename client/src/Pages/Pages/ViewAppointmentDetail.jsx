@@ -1,3 +1,4 @@
+import React from "react";
 import PageHeading from "../../Components/PageHeading";
 import SectionHeading from "../../Components/SectionHeading";
 import Section from "../../Components/Section";

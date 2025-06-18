@@ -40,6 +40,29 @@ export default function Payment() {
         fetchBills()
     }, [token])
 
+    // Handle payment return from MoMo
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('payment');
+        const returnToken = urlParams.get('token');
+        const billId = urlParams.get('billId');
+
+        if (paymentStatus === 'success') {
+            if (returnToken) {
+                // Restore token if it was passed back
+                localStorage.setItem('token', returnToken);
+            }
+            
+            if (billId) {
+                toast.success("Thanh toán thành công!");
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // Refresh bills list
+                window.location.reload();
+            }
+        }
+    }, []);
+
     const filteredBills = filter === "all" ? bills : bills.filter((bill) => bill.status === filter)
 
     const handleFilterChange = (newFilter) => {
@@ -48,6 +71,12 @@ export default function Payment() {
 
     const handlePayBill = async (bill) => {
         try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                toast.error("Vui lòng đăng nhập lại để thực hiện thanh toán");
+                return;
+            }
+
             const response = await fetch(`${import.meta.env.VITE_BE_URL}/payment/create-payment`, {
                 method: "POST",
                 headers: {
@@ -56,12 +85,18 @@ export default function Payment() {
                 },
                 body: JSON.stringify({
                     _id: bill._id,
-                    redirectUrl: `${import.meta.env.VITE_FE_URL}/payment`,
+                    redirectUrl: `${import.meta.env.VITE_FE_URL}/payment?payment=success&billId=${bill._id}&token=${token}`,
                     requestType: "payWithMethod"
                 })
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại");
+                    localStorage.removeItem("token");
+                    window.location.href = "/login";
+                    return;
+                }
                 throw new Error("Failed to create payment");
             }
 
@@ -73,6 +108,9 @@ export default function Payment() {
 
             // Nếu API trả về URL thanh toán, chuyển hướng
             if (result.payUrl) {
+                // Store current state before redirect
+                localStorage.setItem("paymentReturnUrl", window.location.pathname);
+                localStorage.setItem("paymentBillId", bill._id);
                 window.location.href = result.payUrl;
             } else {
                 toast.success("Thanh toán thành công!");
