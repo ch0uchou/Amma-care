@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 const MedicalHistory = () => {
     const [appointments, setAppointments] = useState([]);
     const [doctorRole, setdoctorRole] = useState(null);
+    const [doctorId, setDoctorId] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
     const token = localStorage.getItem('token');
@@ -39,7 +40,9 @@ const MedicalHistory = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setdoctorRole(response.data.role);
+            setDoctorId(response.data.id);
             console.log("Doctor role:", response.data.role);
+            console.log("Doctor ID:", response.data.id);
         } catch (error) {
             console.error("Error fetching doctor role:", error);
         }
@@ -49,10 +52,19 @@ const MedicalHistory = () => {
         setSearchTerm(event.target.value.toLowerCase());
     };
 
-    // Lọc theo tên bệnh nhân (truy cập appointment.appointment.patientName)
-    const filteredAppointments = appointments.filter(({ appointment }) =>
-        appointment.patientName?.toLowerCase().includes(searchTerm)
-    );
+    // Lọc theo tên bệnh nhân và chỉ hiển thị lịch sử khám của bác sĩ hiện tại
+    const filteredAppointments = appointments.filter(({ appointment }) => {
+        // Kiểm tra xem bác sĩ hiện tại có trong danh sách doctorId của appointment không
+        const isDoctorInAppointment = appointment.doctorId && appointment.doctorId.some(doctor => {
+            const docId = typeof doctor === 'object' ? doctor._id : doctor;
+            return docId === doctorId;
+        });
+        
+        // Lọc theo tên bệnh nhân
+        const patientNameMatch = appointment.patientName?.toLowerCase().includes(searchTerm);
+        
+        return isDoctorInAppointment && patientNameMatch;
+    });
 
     const getStatusDisplay = (status) => {
         if (status === "Pending") {
