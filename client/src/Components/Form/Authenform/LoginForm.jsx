@@ -104,7 +104,7 @@ const LoginForm = ({ onLogin }) => {
                 admin: "/admin",
                 nurse: "/nurse/dashboard",
                 doctor: "/doctor",
-                pharmacy: "/pharmacy",
+                pharmacy: "/pharmacy/dashboard",
                 "head of department": "/hod",
                 user: "/"
             };
